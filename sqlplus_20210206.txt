@@ -1,0 +1,384 @@
+
+(1) Oracle11gR4 XE 설치후,
+
+	가. tnsnames.ora 파일에 PDB(XEPDB1) 추가 by netca utility.
+
+		$ netca
+
+	나. Oracle Listener 에 도달 여부 확인
+
+		Syntax: $ tnsping <address> <count>
+
+
+		a. if <address> is a TNS alias name, use TNSNAMES adaptor.
+
+			ex) 
+				$ tnsping XE 10					// by TNSNAMES adaptor.
+				$ tnsping XEPDB1 10			
+
+
+		b. if <address> or <address:port> is a IP address, use EZCONNECT adaptor.
+
+			ex)
+				$ tnsping localhost 10			// by EZCONNECT adaptor using 1521 default listen port.
+				$ tnsping 127.0.0.1 10		
+				$ tnsping 192.168.1.34	10
+				$ tnsping vfx-lenovo 10
+
+
+				$ tnsping localhost:1522 10		// by EZCONNECT adaptor using 1522 user port.
+				$ tnsping 127.0.0.1:1522 10
+				$ tnsping 192.168.1.34:1522 10
+				$ tnsping vfx-lenovo:1522 10
+
+
+
+(2) Oracle SQL*PLUS 연결
+
+	A. by EZCONNECT
+
+		$ sqlplus sys/oracle@vfx-lenovo:1521/XE as sysdba
+		$ sqlplus sys/oracle@vfx-lenovo/XE as sysdba
+
+		$ sqlplus sys/oracle@vfx-lenovo:1521/XEPDB1 as sysdba
+		$ sqlplus sys/oracle@vfx-lenovo/XEPDB1 as sysdba
+
+		$ sqlplus hr/oracle@vfx-lenovo:1521/XEPDB1
+		$ sqlplus hr/oracle@vfx-lenovo/XEPDB1
+
+
+	B. by TNSNAMES
+
+		$ sqlplus sys/oracle@XE as sysdba
+		$ sqlplus sys/oracle@XEPDB1 as sysdba
+
+
+		SQL> disconnect
+		SQL> connect sys/oracle@XE as sysdba
+		SQL> connect sys/oracle@XEPDB1 as sysdba
+
+		SQL> disconnect
+		SQL> connect hr/oracle@XEPDB1
+
+
+
+(3) Oracle SQL*PLUS prompt 설정 ( $ORACLE_HOME/sqlplus/admin/glogin.sql )
+
+		SET FEEDBACK OFF
+		SET TERMOUT OFF
+		SET TIMING OFF
+
+
+		ALTER SESSION SET nls_date_format = 'YYYY/MM/DD hh24:mi:ss';
+
+		SET sqlprompt "( _user'@'_connect_identifier - _date )$ "
+
+		SET FEEDBACK ON
+		SET TERMOUT ON
+		SET TIMING ON
+		SET TRIM ON
+
+		CLEAR BUFFER
+		SET LINESIZE 200
+		SET PAGESIZE 100
+
+		SHOW USER
+
+
+
+(4) HR schema enable / disable
+
+
+	$ sqlplus sys/oracle@XEPDB1 as sysdba
+
+
+	SQL> ALTER USER hr ACCOUNT UNLOCK;				-- Account unlocked.
+	SQL> ALTER USER hr IDENTIFIED BY oracle;		-- Change password.
+
+
+	SQL> ALTER USER hr IDENTIFIED BY oracle ACCOUNT UNLOCK;	-- account unlock & change password simultaneouly.
+
+		OR
+
+	SQL> ALTER USER hr ACCOUNT UNLOCK IDENTIFIED BY oracle;	-- account unlock & change password simultaneouly.
+
+
+	SQL> ALTER USER hr ACCOUNT LOCK;				-- Account locked.
+
+
+
+(5) Oracle SQL*Developer 연결설정 Tips
+
+	가. 사용자정의 JDBC
+
+		jdbc:oracle:thin:@vfx-lenovo:1521/XE
+		jdbc:oracle:oci:@vfx-lenovo:1521/XEPDB1
+
+		jdbc:oracle:oci:@vfx-lenovo:1521/XE
+		jdbc:oracle:oci:@vfx-lenovo:1521/XEPDB1
+
+
+
+(6) Oracle 설치제거 후, 남아있는 계정 삭제하기 (아래의 모든 명령어는 **관리자권한의 도스창에서 실행해야 함**)
+
+	a. net command
+
+		NET USER [username [password | *] [options]] [/DOMAIN]
+			         username {password | *} /ADD [options] [/DOMAIN]
+			         username [/DELETE] [/DOMAIN]
+			         username [/TIMES:{times | ALL}]
+			         username [/ACTIVE: {YES | NO}]
+
+
+    b. To check all accounts
+
+    	C:\> net user
+
+    	ex) C:\> net user
+
+
+    c. To view information of a account
+
+    	C:\> net user <account>
+
+    	ex) C:\> net user oracle
+
+
+    d. To delete a account
+
+    	C:\> net user <account> /delete
+
+
+    	ex) C:\> net user oracle /delete
+
+
+
+(7) Oracle 설치제거 후, 남아있는 사용자그룹 삭제하기 (아래의 모든 명령어는 **관리자권한의 도스창에서 실행해야 함**)
+
+	a. To list all user groups
+
+		ex) C:\> net localgroup
+
+			...
+
+
+	b. To remove a specified local group 
+
+		Syntax: net localgroup <local group name> /delete
+
+		ex) C:\> net localgroup ORA_OraDB18Home2_OPER /delete
+		    명령을 잘 실행했습니다.
+
+		    C:\> net localgroup
+		    ...
+		    ...
+
+
+(8) Creating a NEW pluggable database using dbca
+
+	$ dbca
+
+
+
+(9) Oracle DB samples installation
+
+
+	a. clone oracle db sample git remote repository
+
+		C:\u01> git clone https://github.com/oracle/db-sample-schemas.git
+		
+		C:\u01> dir
+		db-sample-schemas
+
+		C:\u01> cd db-sample-schemas
+
+		C:\u01\db-sample-schemas>
+
+	b. To replace all "__SUB__CWD__" with "C:/u01/db-sample-schemas" in the db-sample-schemas recursively.
+
+	c. To install all oracle db samples
+
+		C:\u01\db-sample-schemas> sqlplus sys/oracle@osan as sysdba
+
+		( SYS@osan - 2021/02/06 15:25:26 )$ @mksample
+
+		specify password for SYSTEM as parameter 1:
+		1의 값을 입력하십시오: oracle
+
+		specify password for SYS as parameter 2:
+		2의 값을 입력하십시오: oracle
+
+		specify password for HR as parameter 3:
+		3의 값을 입력하십시오: oracle
+
+		specify password for OE as parameter 4:
+		4의 값을 입력하십시오: oracle
+
+		specify password for PM as parameter 5:
+		5의 값을 입력하십시오: oracle
+
+		specify password for IX as parameter 6:
+		6의 값을 입력하십시오: oracle
+
+		specify password for SH as parameter 7:
+		7의 값을 입력하십시오: oracle
+
+		specify password for BI as parameter 8:
+		8의 값을 입력하십시오: oracle
+
+		specify default tablespace as parameter 9:
+		9의 값을 입력하십시오: USERS
+
+		specify temporary tablespace as parameter 10:
+		10의 값을 입력하십시오: TEMP
+
+		specify log file directory (including trailing delimiter) as parameter 11:
+		11의 값을 입력하십시오: C:\u01\oracle\product\19.3.0\dbhome\demo\schema\log\
+
+		specify connect string as parameter 12:
+		12의 값을 입력하십시오: vfx-lenovo:1521/osan		// by EZCONNECT
+
+
+		...
+
+
+
+(10) To set ORACLE_HOME, TNS_ADMIN system variable
+
+
+	C:\> sysdm.cpl
+
+	//-------------------------------------------//
+
+	C:\> set ORACLE_HOME
+	C:\u01\oracle\product\19.3.0\dbhome
+
+	//-------------------------------------------//
+
+	C:\> set TNS_ADMIN
+	C:\u01\oracle\product\19.3.0\dbhome\network\admin
+
+
+
+(11) Oracle SQL*Developer 연결설정
+
+
+	a. About CDB (korea)
+
+		- SYS 	(as sysdba)
+
+
+	b. About PDB (seoul)
+
+		- SYS 	(as sysdba)
+		- HR
+		- SCOTT
+
+
+	C. About PDB (osan)
+
+		- SYS 	(as sysdba)
+		- OSAN
+		- HR
+		- OE
+		- PM
+		- IX
+		- SH
+		- BI
+
+
+(12) Oracle SQLcl 설치 및 설정
+
+	(*주의1*)
+	Oracle19c enterprise edition 에서, sqldeveloper(sqlcl) 에서 NullPointerException이 발생하지 않으려면,
+	ORACLE_HOME 환경변수가 등록되어야 함.
+
+
+	a. Download installer (zip file) from Oracle web site.
+
+	b. Extract the install into C:\opt\SQLcl
+
+	c. 시스템환경변수 설정
+
+		- SQLPATH : C:\opt\SQLcl
+		- PATH 에 추가 : C:\opt\SQLcl\bin
+		- TNS_ADMIN : %ORACLE_HOME%\network\admin
+
+	d. C:\opt\SQLcl\login.sql 파일 편집
+
+		SET FEEDBACK OFF
+		SET TERMOUT OFF
+		SET TIMING OFF
+
+
+		ALTER SESSION SET nls_date_format = 'YYYY/MM/DD hh24:mi:ss';
+
+		SET sqlprompt "( _user'@'_connect_identifier - _date )$ "
+
+		SET FEEDBACK ON
+		SET TERMOUT ON
+		SET TIMING ON
+		SET TRIM ON
+
+		CLEAR BUFFER
+		SET LINESIZE 200
+		SET PAGESIZE 100
+		
+		-- SHOW USER
+
+
+(13) To install Oracle Instant Client & Set up.
+
+	a. Download Oracle Instant Client Installer (*.zip) from the Oracle web site.
+
+		- Basic
+		- SDK
+		- SQLPLUS
+
+
+	b. Installation
+
+		- 모든 압축파일(*.zip) 해제 (C:\opt\instantclient_12_2)
+
+
+	c. TNSNAMES 구성
+
+		- 디렉토리 생성 : C:\opt\instantclient_12_2\network\admin
+
+		- sqlnet.ora 파일 복사
+		- tnsnames.ora 파일 복사
+
+		- 또는 Oracle cloud wallet 압축파일 해제
+
+
+	d. 시스템 환경변수 편집
+
+		- TNS_ADMIN
+
+
+	e. glogin.sql 파일 편집
+
+		SET FEEDBACK OFF
+		SET TERMOUT OFF
+		SET TIMING OFF
+
+
+		ALTER SESSION SET nls_date_format = 'YYYY/MM/DD hh24:mi:ss';
+
+		SET sqlprompt "( _user'@'_connect_identifier - _date )$ "
+
+		SET FEEDBACK ON
+		SET TERMOUT ON
+		SET TIMING ON
+		SET TRIM ON
+
+		CLEAR BUFFER
+		SET LINESIZE 200
+		SET PAGESIZE 100
+		
+		SHOW USER
+
+
+
+
+
